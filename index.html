@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="https://necolas.github.io/normalize.css/8.0.1/normalize.css" />
+    <link rel="stylesheet" href="/style.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="/app.js" type="module"></script>
+    <title>Covid19</title>
+</head>
+
+<body>
+    <header>
+        <h2>Covid-19 stats world wide</h2>
+    </header>
+    <div class="main">
+        <div class="chart-container"></div>
+        <div class="main__opening">
+            <h1>Welcome</h1>
+            <h2>Please select a region below</h2>
+        </div>
+        <div class="loading-spinner display-none"></div>
+    </div>
+
+    <div class="control-area">
+        <div class="continents-container">
+            <button class="btn" data-continent="asia">Asia</button>
+            <button class="btn" data-continent="europe">Europe</button>
+            <button class="btn" data-continent="africa">Africa</button>
+            <button class="btn" data-continent="americas">Americas</button>
+        </div>
+        <div class="stats-container">
+            <button class="btn" data-type="confirmed">Confirmed</button>
+            <button class="btn" data-type="deaths">Deaths</button>
+            <button class="btn" data-type="recovered">Recovered</button>
+            <button class="btn" data-type="critical">Critical</button>
+        </div>
+        <div class="countries-container"></div>
+    </div>
+</body>
+
+</html>

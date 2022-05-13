@@ -48,14 +48,26 @@ async function getCountriesData(continent) {
             `${cors}https://restcountries.herokuapp.com/api/v1/region/${continent}?fields=name;alpha2Code`
         );
         const data = countriesApi.data
-        console.log(data)
+        const currentContinent = countriesMap[continent] = data.map((country) => {
+            return (new Country(country.name.common, country.cca2));
+        })
+
+        const countriesPromiseArr = currentContinent.map((country) => {
+            return axios.get(`${cors}https://corona-api.com/countries/${country.code}`);
+        });
+        const countriesDataArr = await Promise.allSettled(countriesPromiseArr);
+
+
+        console.log(data, countriesMap, currentContinent, countriesPromiseArr, countriesDataArr)
     } catch (error) {
         console.log(error);
     }
 }
+//countries and covid API's are somewhat inconsistent. fix it:
 
-getCountriesData("europe")
-    // store data in variables
+getCountriesData("asia")
+
+// store data in variables
 
 //get covid data by countries and store in variables
 

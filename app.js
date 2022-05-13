@@ -47,18 +47,20 @@ async function getCountriesData(continent) {
         const countriesApi = await axios.get(
             `${cors}https://restcountries.herokuapp.com/api/v1/region/${continent}?fields=name;alpha2Code`
         );
-        const data = countriesApi.data
-        const currentContinent = countriesMap[continent] = data.map((country) => {
+        const { data } = countriesApi;
+        const curContinentCodeArr = countriesMap[continent] = data.map((country) => {
             return (new Country(country.name.common, country.cca2));
         })
 
-        const countriesPromiseArr = currentContinent.map((country) => {
+        const countriesPromiseArr = curContinentCodeArr.map((country) => {
             return axios.get(`${cors}https://corona-api.com/countries/${country.code}`);
         });
         const countriesDataArr = await Promise.allSettled(countriesPromiseArr);
-
-
-        console.log(data, countriesMap, currentContinent, countriesPromiseArr, countriesDataArr)
+        const covidData = countriesDataArr.map((country) => {
+            const latestData = country.value.data.data.latest_data;
+            return latestData
+        })
+        console.log(data, curContinentCodeArr, countriesPromiseArr, countriesDataArr, covidData)
     } catch (error) {
         console.log(error);
     }

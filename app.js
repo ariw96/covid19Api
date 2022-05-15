@@ -2,10 +2,11 @@
 const state = { continent: null, dataType: "confirmed" };
 const continentsList = ["asia", "europe", "africa", "america"];
 const countriesMap = {};
-const covidPerCountryMap = {};
+const covidCountryMap = {};
+const covidPerContinentMap = {};
 let latest_dataArr = [];
 const cors = "https://intense-mesa-62220.herokuapp.com/";
-const colors = { 1: "#6C4A4A", 2: "#C89595", 3: "#DDBEBE", 4: "#EDEDED" };
+
 
 //DOM Elements
 const continentsEL = document.querySelectorAll("[data-continent]");
@@ -14,7 +15,6 @@ const countriesContainerEl = document.querySelector(".countries-container");
 const chartContainerEl = document.querySelector(".chart-container");
 const openingAreaEl = document.querySelector(".main__opening");
 const spinnerEl = document.querySelector(".loading-spinner");
-
 
 async function getCountriesData(continent) {
     try {
@@ -28,36 +28,47 @@ async function getCountriesData(continent) {
         const curContinentNameArr = await data.map((country) => {
             return country.name.common;
         })
-        displayBtn(curContinentNameArr)
         countriesMap[continent] = curContinentNameArr;
         const countriesPromiseArr = curContinentCodeArr.map((code) => {
             return axios.get(`${cors}https://corona-api.com/countries/${code}`);
         });
         const countriesDataArr = await Promise.allSettled(countriesPromiseArr);
-        const covidCountryMap = {}
         latest_dataArr = countriesDataArr.map((element) => {
             covidCountryMap[element.value.data.data.name] = element.value.data.data.latest_data
             return element.value.data.data.latest_data
         })
-        covidPerCountryMap[continent] = covidCountryMap
+        covidPerContinentMap[continent] = covidCountryMap
 
+        console.log(covidCountryMap, countriesMap[continent])
 
-
-        createChart(continent)
-
-        console.log(covidPerCountryMap[continent], latest_dataArr)
     } catch (error) {
         console.log(error);
     }
 }
+//utilities functions
+async function displayContent(continent) {
+    if (covidPerContinentMap[continent]) return;
+    spinnerEl.classList.toggle("display-none");
+    await getCountriesData(continent)
+    await displayBtn(continent)
+    spinnerEl.classList.toggle("display-none");
+    createChart(continent)
+}
 
-function displayBtn(arr) {
-    arr.forEach((country) => {
+function dataTypeArr(dataType) {
+    return latest_dataArr.map((e) => e[dataType])
+}
+
+function displayBtn(continent) {
+    countriesMap[continent].forEach((country) => {
         const countryEl = document.createElement("button");
         countryEl.classList.add("btn", "btn-country");
         countryEl.dataset.country = country;
         countryEl.innerText = country;
         countriesContainerEl.appendChild(countryEl);
+        countryEl.addEventListener("click", (e) => {
+            createCountryChart(e.target.dataset.country);
+        });
 
     });
 }
@@ -66,7 +77,7 @@ function displayBtn(arr) {
 
 //create a line chart
 function createChart(continent) {
-    if (countriesMap[continent]) {
+    if (covidPerContinentMap[continent]) {
         const chartEl = document.createElement("canvas");
         chartContainerEl.innerHTML = "";
         chartContainerEl.appendChild(chartEl);
@@ -75,21 +86,21 @@ function createChart(continent) {
             (window.screen.availHeight / 3.5).toString()
         );
         chartEl.setAttribute("width", (window.screen.availHeight * 0.8).toString());
-        Chart.defaults.global.defaultFontColor = colors[1];
+        Chart.defaults.global.defaultFontColor = "black";
         const chart = new Chart(chartEl, {
             type: "line",
             data: {
                 labels: countriesMap[continent],
                 datasets: [{
+                    label: `${state.dataType}`,
                     data: dataTypeArr(state.dataType),
-                    backgroundColor: "rgba(200, 149, 149, 0.2)",
-                    borderColor: colors[2],
+                    backgroundColor: "yellow",
                 }, ],
             },
             options: {
                 title: {
                     display: true,
-                    text: `Covid-19 in ${continent}`,
+                    text: ` ${continent}`,
                     fontSize: 20,
                 },
             },
@@ -97,10 +108,42 @@ function createChart(continent) {
 
     }
 }
+// bar chart
+function createCountryChart(country) {
+    const chartEl = document.createElement("canvas");
+    chartContainerEl.innerHTML = "";
+    chartContainerEl.appendChild(chartEl);
+    chartEl.setAttribute("height", (window.screen.availHeight / 4).toString());
+    chartEl.setAttribute("width", (window.screen.availHeight * 0.9).toString());
+    const chart = new Chart(chartEl, {
+        type: "bar",
+        data: {
+            labels: ["confirmed", "deaths", "recovered", "critical"],
+            datasets: [{
+                label: country,
+                data: [
+                    covidCountryMap[country].confirmed,
+                    covidCountryMap[country].deaths,
+                    covidCountryMap[country].recovered,
+                    covidCountryMap[country].critical,
+                ],
+                backgroundColor: ["yellow", "red", 'green', "orange"]
+            }, ],
+        },
+        options: {
+            title: {
+                display: true,
+                text: ` ${country}`,
+                fontSize: 20,
+            },
+        },
+    });
+}
+//addEventListener
 continentsEL.forEach((continent) => {
     continent.addEventListener("click", (e) => {
         state.continent = e.target.dataset.continent;
-        getCountriesData(e.target.dataset.continent);
+        displayContent(e.target.dataset.continent)
         createChart(e.target.dataset.continent);
 
     });
@@ -112,7 +155,3 @@ dataTypeEL.forEach((dataType) => {
         createChart(state.continent);
     });
 });
-
-function dataTypeArr(dataType) {
-    return latest_dataArr.map((e) => e[dataType])
-}
